@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://3cg27xlwspy"]
+
+[ext_resource type="Script" path="res://scripts/debug_click.gd" id="1_gkri3"]
+[ext_resource type="Script" path="res://scripts/debug_hud.gd" id="1_t0twn"]
+
+[node name="DebugHud" type="CanvasLayer"]
+script = ExtResource("1_t0twn")
+
+[node name="DebugClick" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_gkri3")
