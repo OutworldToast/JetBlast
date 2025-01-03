@@ -53,3 +53,10 @@ rotation = 2.04282
 shape = SubResource("CapsuleShape2D_phhlw")
 
 [node name="DebugHud" parent="." instance=ExtResource("4_n3bls")]
+
+[node name="SpawnPoint" type="Marker2D" parent="."]
+process_mode = 3
+
+[node name="ChargeTimer" type="Timer" parent="."]
+wait_time = 2.0
+one_shot = true
