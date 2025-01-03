@@ -1,0 +1,63 @@
+[gd_scene load_steps=9 format=3 uid="uid://ksv2ir7fh7p5"]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_1xv3d"]
+[ext_resource type="Texture2D" uid="uid://ca65a2vjmpjya" path="res://art/playerstand.png" id="2_f2nj7"]
+[ext_resource type="PackedScene" uid="uid://c34olt6qn5xfs" path="res://scenes/pause.tscn" id="2_qjduy"]
+[ext_resource type="Texture2D" uid="uid://cbjxub2a1aokx" path="res://art/playerwalk.png" id="3_dn5hf"]
+[ext_resource type="PackedScene" uid="uid://3cg27xlwspy" path="res://scenes/debug_hud.tscn" id="4_n3bls"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_v4daj"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_f2nj7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_dn5hf")
+}],
+"loop": true,
+"name": &"walk",
+"speed": 5.0
+}]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_ybcse"]
+radius = 81.2494
+height = 267.9
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_phhlw"]
+radius = 31.9311
+height = 142.196
+
+[node name="Player" type="CharacterBody2D"]
+position = Vector2(429, 347)
+scale = Vector2(0.25, 0.25)
+script = ExtResource("1_1xv3d")
+
+[node name="Pause" parent="." instance=ExtResource("2_qjduy")]
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_v4daj")
+animation = &"walk"
+frame = 1
+frame_progress = 0.84924
+
+[node name="BodyHitbox" type="CollisionShape2D" parent="."]
+position = Vector2(10, 12)
+rotation = -2.60632
+shape = SubResource("CapsuleShape2D_ybcse")
+
+[node name="HeadHitbox" type="CollisionShape2D" parent="."]
+position = Vector2(117, -74)
+rotation = 2.04282
+shape = SubResource("CapsuleShape2D_phhlw")
+
+[node name="DebugHud" parent="." instance=ExtResource("4_n3bls")]
+
+[node name="SpawnPoint" type="Marker2D" parent="."]
+process_mode = 3
+
+[node name="ChargeTimer" type="Timer" parent="."]
+wait_time = 2.0
+one_shot = true
+
+[node name="EffectsLayer" type="CanvasLayer" parent="."]

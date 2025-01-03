@@ -1,10 +1,10 @@
 [gd_scene load_steps=4 format=3 uid="uid://b5v5i7mhi1udh"]
 
-[ext_resource type="Texture2D" uid="uid://chfq2xc7vecj" path="res://art/walls.png" id="1_v13uh"]
+[ext_resource type="Texture2D" uid="uid://chfq2xc7vecj" path="res://art/walls.png" id="1_ddvdm"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_yfxbr"]
-resource_name = "walls"
-texture = ExtResource("1_v13uh")
+resource_name = "<null>"
+texture = ExtResource("1_ddvdm")
 texture_region_size = Vector2i(64, 64)
 0:0/0 = 0
 1:0/0 = 0
