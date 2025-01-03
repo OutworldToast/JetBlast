@@ -16,12 +16,13 @@ var blast_sprite = preload("res://art/blast.png")
 @onready var debug_hud: DebugHud = $DebugHud
 @onready var spawn_point: Marker2D = $SpawnPoint
 @onready var charge_timer: Timer = $ChargeTimer
+@onready var effects_layer: CanvasLayer = $EffectsLayer
 
 #endregion nodes
 
 #region consts
 const TERMINAL_SPEED = 1200.0
-const SPEED = TERMINAL_SPEED/4
+const SPEED = TERMINAL_SPEED/3
 const JUMP_VELOCITY = -400.0
 #endregion consts
 
@@ -72,7 +73,7 @@ func blast(click_location: Vector2, charge = 1.0) -> void:
 	if not infinite_blasts:
 		has_blast = false
 
-	create_blast_visual(200 * blast_direction * Vector2(-1, -1), charge)
+	create_blast_visual(100 * blast_direction * Vector2(-1, -1), charge)
 
 	if debug:
 		print("Charge power: " + str(charge))
@@ -89,7 +90,7 @@ func create_blast_visual(blast_location, charge = 1.0) -> void:
 	explosion.apply_scale(scale * charge)
 
 	# add blast to tree
-	$EffectsLayer.add_child(explosion)
+	effects_layer.add_child(explosion)
 
 	# destroy after 2 seconds
 	await get_tree().create_timer(2.0).timeout
@@ -120,6 +121,28 @@ func jump() -> void:
 	if look_direction_changed:
 		look_in_direction(look_direction)
 
+func walk(input_direction: float, delta) -> void:
+	if input_direction:
+
+		var input_velocity = input_direction * SPEED
+		var abs_velocity_x = absf(velocity.x)
+
+		if sign(velocity.x) == sign(input_direction):
+			# Moving in the same direction as input
+			if abs_velocity_x < SPEED:
+				velocity.x += 2 * input_velocity * delta
+		else:
+			velocity.x += input_velocity * delta
+
+		if absf(input_velocity) > abs_velocity_x:
+			look_in_direction(Vector2(input_direction, 0))
+			sprite.play()
+
+	else:
+		sprite.stop()
+		# apply horizontal friction
+		velocity.x = lerp(velocity.x, 0.0, 0.3 * delta)
+
 func reset() -> void:
 	velocity = Vector2.ZERO
 	position = spawn_point.position
@@ -145,9 +168,6 @@ func _physics_process(delta: float) -> void:
 	if debug:
 		debug_hud.add_circle(spawn_point.position, Color.CORNFLOWER_BLUE)
 
-	# apply horizontal friction
-	velocity.x = lerp(velocity.x, 0.0, 0.01)
-
 	# apply gravity and vertical friction
 	if not is_on_floor():
 		var gravity = get_gravity()
@@ -157,22 +177,14 @@ func _physics_process(delta: float) -> void:
 		velocity += gravity * delta
 		velocity.y -= ver_friction.y * delta * current_velocity.y
 
-	# handle jump.
+	# handle jump
 	if Input.is_action_just_pressed(&"jump") and has_jump:
 		jump()
 	if Input.is_action_just_pressed(&"respawn"):
 		reset()
 
-	# Get the input direction and handle the movement/deceleration.
-	# As good practice, you should replace UI actions with custom gameplay actions.
+	# handle walking/countersteering
 	var input_direction := Input.get_axis(&"left", &"right")
-	if input_direction:
-		sprite.play()
-		look_in_direction(Vector2(input_direction, 0))
-
-		velocity.x = input_direction * SPEED
-	else:
-		sprite.stop()
-		#velocity.x = move_toward(velocity.x, 0, SPEED)
+	walk(input_direction, delta)
 
 	move_and_slide()
