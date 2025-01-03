@@ -29,10 +29,9 @@ radius = 31.9311
 height = 142.196
 
 [node name="Player" type="CharacterBody2D"]
-position = Vector2(433, 369)
-scale = Vector2(0.4, 0.4)
+position = Vector2(429, 347)
+scale = Vector2(0.25, 0.25)
 script = ExtResource("1_1xv3d")
-metadata/_edit_group_ = true
 
 [node name="Pause" parent="." instance=ExtResource("2_qjduy")]
 
@@ -60,3 +59,5 @@ process_mode = 3
 [node name="ChargeTimer" type="Timer" parent="."]
 wait_time = 2.0
 one_shot = true
+
+[node name="EffectsLayer" type="CanvasLayer" parent="."]

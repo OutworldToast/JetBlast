@@ -20,7 +20,8 @@ var blast_sprite = preload("res://art/blast.png")
 #endregion nodes
 
 #region consts
-const SPEED = 300.0
+const TERMINAL_SPEED = 1200.0
+const SPEED = TERMINAL_SPEED/4
 const JUMP_VELOCITY = -400.0
 #endregion consts
 
@@ -61,7 +62,7 @@ func blast(click_location: Vector2, charge = 1.0) -> void:
 	else:
 		look_in_direction(blast_direction.rotated(-0.5 * PI), blast_direction.y > 0)
 
-	var min_blast = 4 * SPEED * blast_direction * charge
+	var min_blast = TERMINAL_SPEED * blast_direction * charge
 	var redirect_blast = blast_direction * velocity.length()
 
 	var redirect_is_larger = redirect_blast.length_squared() > min_blast.length_squared()
@@ -71,12 +72,28 @@ func blast(click_location: Vector2, charge = 1.0) -> void:
 	if not infinite_blasts:
 		has_blast = false
 
+	create_blast_visual(200 * blast_direction * Vector2(-1, -1), charge)
+
 	if debug:
 		print("Charge power: " + str(charge))
 		print("Blast direction:" + str(blast_direction))
 		print("Velocity magnitude: " + str(velocity.length()))
 		debug_hud.add_circle(position + 200*blast_direction, Color.PURPLE)
 		debug_hud.add_circle(position + velocity, Color.RED)
+
+func create_blast_visual(blast_location, charge = 1.0) -> void:
+	# create blast
+	var explosion = Sprite2D.new()
+	explosion.global_position = position + blast_location
+	explosion.texture = blast_sprite
+	explosion.apply_scale(scale * charge)
+
+	# add blast to tree
+	$EffectsLayer.add_child(explosion)
+
+	# destroy after 2 seconds
+	await get_tree().create_timer(2.0).timeout
+	explosion.queue_free()
 
 func jump() -> void:
 
@@ -128,12 +145,19 @@ func _physics_process(delta: float) -> void:
 	if debug:
 		debug_hud.add_circle(spawn_point.position, Color.CORNFLOWER_BLUE)
 
-	# Add the gravity.
-	if not is_on_floor():
-		velocity.x = lerp(velocity.x, 0.0, 0.01)
-		velocity += get_gravity() * delta
+	# apply horizontal friction
+	velocity.x = lerp(velocity.x, 0.0, 0.01)
 
-	# Handle jump.
+	# apply gravity and vertical friction
+	if not is_on_floor():
+		var gravity = get_gravity()
+		var ver_friction = gravity/TERMINAL_SPEED
+		var current_velocity = velocity
+
+		velocity += gravity * delta
+		velocity.y -= ver_friction.y * delta * current_velocity.y
+
+	# handle jump.
 	if Input.is_action_just_pressed(&"jump") and has_jump:
 		jump()
 	if Input.is_action_just_pressed(&"respawn"):
