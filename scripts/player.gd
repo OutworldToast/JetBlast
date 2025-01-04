@@ -33,11 +33,12 @@ const WALKING_FRICTION = 5.0
 #endregion consts
 
 # bools for game logic
-var rolling: bool = false
+var rolling: bool = true
 var looking_left: bool = false
 
 var has_jump: bool = true
 var has_blast: bool = true
+var blasting: bool = false
 
 var blast_refresh_disabled: bool = false
 
@@ -64,6 +65,20 @@ func look_in_direction(direction: Vector2, flipped: bool = false) -> void:
 		print ("Character looking left" if looking_left else "Character looking right")
 		debug_hud.add_circle(200*direction + position, Color.BLUE)
 
+func create_blast_visual(blast_location, charge = 1.0) -> void:
+	# create blast
+	var explosion = Sprite2D.new()
+	explosion.global_position = position + blast_location
+	explosion.texture = blast_sprite
+	explosion.apply_scale(scale * charge)
+
+	# add blast to tree
+	effects_layer.add_child(explosion)
+
+	# destroy after 2 seconds
+	await get_tree().create_timer(2.0).timeout
+	explosion.queue_free()
+
 func blast(click_location: Vector2, charge = 1.0) -> void:
 	var blast_direction = (position - click_location).limit_length(1.0)
 
@@ -82,6 +97,9 @@ func blast(click_location: Vector2, charge = 1.0) -> void:
 
 	velocity = redirect_blast if redirect_is_larger else min_blast
 
+	blasting = true
+	stop_rolling()
+
 	if not infinite_blasts:
 		blast_refresh_disabled = true
 		blast_refraction_timer.start()
@@ -96,27 +114,14 @@ func blast(click_location: Vector2, charge = 1.0) -> void:
 		debug_hud.add_circle(position + 200*blast_direction, Color.PURPLE)
 		debug_hud.add_circle(position + velocity, Color.RED)
 
-func create_blast_visual(blast_location, charge = 1.0) -> void:
-	# create blast
-	var explosion = Sprite2D.new()
-	explosion.global_position = position + blast_location
-	explosion.texture = blast_sprite
-	explosion.apply_scale(scale * charge)
-
-	# add blast to tree
-	effects_layer.add_child(explosion)
-
-	# destroy after 2 seconds
-	await get_tree().create_timer(2.0).timeout
-	explosion.queue_free()
-
 func jump() -> void:
 
-	var look_direction: Vector2
-	var look_direction_changed = false
-
-	# if upward velocity smaller than jump velocity
+	# jump only if it would increase velocity
 	if velocity.y > JUMP_VELOCITY:
+
+		var look_direction: Vector2
+		var look_direction_changed = false
+
 		velocity.y = JUMP_VELOCITY
 		has_jump = false
 
@@ -127,12 +132,15 @@ func jump() -> void:
 		look_direction = velocity.rotated(look_rotation * PI)
 		look_direction_changed = true
 
-	if absf(velocity.x) < 1.2*SPEED:
-		look_direction = Vector2(velocity.x, 0)
-		look_direction_changed = true
+		if absf(velocity.x) < 1.2*SPEED:
+			look_direction = Vector2(velocity.x, 0)
+			look_direction_changed = true
 
-	if look_direction_changed:
-		look_in_direction(look_direction)
+		if look_direction_changed:
+			look_in_direction(look_direction)
+
+		stop_rolling()
+		blasting = false
 
 func walk(input_direction: float, delta) -> void:
 
@@ -140,6 +148,8 @@ func walk(input_direction: float, delta) -> void:
 
 	if absf(velocity.x) < 5.0:
 		velocity.x = 0
+		stop_rolling()
+		blasting = false
 
 	if input_direction:
 
@@ -153,6 +163,8 @@ func walk(input_direction: float, delta) -> void:
 
 		# checks if player within walking speed
 		if abs_velocity_x < SPEED:
+			blasting = false
+			stop_rolling()
 			# make walking snappier
 			modifier = 3
 		elif sign(velocity.x) != sign(input_direction):
@@ -176,7 +188,24 @@ func reset(position_ = get_viewport_rect().size/2) -> void:
 	looking_left = false
 	has_jump = true
 	has_blast = true
-	rolling = false
+	blasting = false
+	stop_rolling()
+
+func start_rolling() -> void:
+	if not rolling:
+		rolling = true
+		#TODO: play rolling animation
+
+		if debug:
+			print("Started Rolling")
+
+func stop_rolling() -> void:
+	if rolling:
+		rolling = false
+		#TODO: stop rolling animation
+
+		if debug:
+			print("Stopped Rolling")
 
 func _on_blast_refraction_timer_timeout() -> void:
 	blast_refresh_disabled = false
@@ -223,3 +252,6 @@ func _physics_process(delta: float) -> void:
 		jump()
 
 	move_and_slide()
+
+	if blasting and get_slide_collision_count() != 0:
+		start_rolling()
