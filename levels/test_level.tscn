@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://bhmw610vo7hw1"]
+
+[ext_resource type="PackedScene" uid="uid://hl64uawawf03" path="res://scenes/level.tscn" id="1_q4jlp"]
+
+[node name="TestLevel" instance=ExtResource("1_q4jlp")]
+
+[node name="SpawnPoint" parent="." index="1"]
+position = Vector2(677, 538)
+
+[editable path="Player"]

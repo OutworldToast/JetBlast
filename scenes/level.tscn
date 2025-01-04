@@ -1,0 +1,18 @@
+[gd_scene load_steps=4 format=3 uid="uid://hl64uawawf03"]
+
+[ext_resource type="Script" path="res://scripts/level.gd" id="1_k4tnq"]
+[ext_resource type="PackedScene" uid="uid://b5v5i7mhi1udh" path="res://scenes/tile_map_layer.tscn" id="2_gm6v2"]
+[ext_resource type="PackedScene" uid="uid://ksv2ir7fh7p5" path="res://scenes/player.tscn" id="3_7en7x"]
+
+[node name="Level" type="Node2D"]
+process_mode = 1
+script = ExtResource("1_k4tnq")
+
+[node name="TileMapLayer" parent="." instance=ExtResource("2_gm6v2")]
+
+[node name="SpawnPoint" type="Marker2D" parent="."]
+position = Vector2(816, 550)
+
+[node name="Player" parent="." instance=ExtResource("3_7en7x")]
+
+[editable path="Player"]

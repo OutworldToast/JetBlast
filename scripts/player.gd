@@ -7,14 +7,13 @@ signal has_died
 var blast_sprite = preload("res://art/blast.png")
 
 # debug true also sets infinite_blasts
-@export var debug = true
+@export var debug = false
 
 #region nodes
 @onready var sprite: AnimatedSprite2D = $Sprite
 @onready var body_hitbox: CollisionShape2D = $BodyHitbox
 @onready var head_hitbox: CollisionShape2D = $HeadHitbox
 @onready var debug_hud: DebugHud = $DebugHud
-@onready var spawn_point: Marker2D = $SpawnPoint
 @onready var charge_timer: Timer = $ChargeTimer
 @onready var effects_layer: CanvasLayer = $EffectsLayer
 
@@ -31,9 +30,6 @@ var has_jump: bool = true
 var has_blast: bool = true
 
 var infinite_blasts: bool = debug
-
-func set_spawn_point(position_: Vector2) -> void:
-	spawn_point.position = position_
 
 func look_in_direction(direction: Vector2, flipped: bool = false) -> void:
 
@@ -110,7 +106,6 @@ func jump() -> void:
 
 		if velocity.x < 0:
 			look_rotation = -0.5
-
 		look_direction = velocity.rotated(look_rotation * PI)
 		look_direction_changed = true
 
@@ -143,17 +138,13 @@ func walk(input_direction: float, delta) -> void:
 		# apply horizontal friction
 		velocity.x = lerp(velocity.x, 0.0, 0.3 * delta)
 
-func reset() -> void:
+func reset(position_ = get_viewport_rect().size/2) -> void:
 	velocity = Vector2.ZERO
-	position = spawn_point.position
+	position = position_
 	look_in_direction(Vector2(position.x, 0))
 	looking_left = false
 	has_jump = true
 	has_blast = true
-
-func _ready() -> void:
-	set_spawn_point(get_viewport_rect().size / 2)
-	position = spawn_point.position
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"click"):
@@ -165,8 +156,8 @@ func _input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 
-	if debug:
-		debug_hud.add_circle(spawn_point.position, Color.CORNFLOWER_BLUE)
+	#if debug:
+		#debug_hud.add_circle(spawn_point.position, Color.CORNFLOWER_BLUE)
 
 	# apply gravity and vertical friction
 	if not is_on_floor():
@@ -180,8 +171,6 @@ func _physics_process(delta: float) -> void:
 	# handle jump
 	if Input.is_action_just_pressed(&"jump") and has_jump:
 		jump()
-	if Input.is_action_just_pressed(&"respawn"):
-		reset()
 
 	# handle walking/countersteering
 	var input_direction := Input.get_axis(&"left", &"right")
