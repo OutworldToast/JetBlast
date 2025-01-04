@@ -27,7 +27,10 @@ func close_menu() -> void:
 	menu_open = false
 
 func toggle_menu() -> void:
-	close_menu() if menu_open else open_menu()
+	if menu_open:
+		close_menu()
+	else:
+		open_menu()
 
 func unload_level() -> void:
 	if (is_instance_valid(level_instance)):

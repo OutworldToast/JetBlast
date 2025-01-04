@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=4 uid="uid://bhmw610vo7hw1"]
+[gd_scene load_steps=3 format=4 uid="uid://bhmw610vo7hw1"]
 
 [ext_resource type="PackedScene" uid="uid://hl64uawawf03" path="res://scenes/level.tscn" id="1_q4jlp"]
+[ext_resource type="PackedScene" uid="uid://bloslk60undni" path="res://scenes/enemy.tscn" id="2_5mlpb"]
 
 [node name="TestLevel" instance=ExtResource("1_q4jlp")]
 
@@ -10,5 +11,19 @@ tile_map_data = PackedByteArray("AAAGAA4AAAACAAAAAAAHAA4AAAACAAAAAAAIAA4AAAACAAA
 
 [node name="SpawnPoint" parent="." index="1"]
 position = Vector2(770, 871)
+
+[node name="Player" parent="." index="2"]
+metadata/_edit_group_ = true
+
+[node name="Enemy" parent="." index="3" instance=ExtResource("2_5mlpb")]
+position = Vector2(1205, 523)
+
+[node name="EnemyRespawnTimer" type="Timer" parent="." index="4"]
+wait_time = 2.0
+one_shot = true
+
+[connection signal="body_entered" from="Enemy" to="Player" method="_on_enemy_body_entered"]
+[connection signal="enemy_has_died" from="Enemy" to="Player" method="_on_enemy_enemy_has_died"]
+[connection signal="timeout" from="EnemyRespawnTimer" to="Enemy" method="_on_enemy_respawn_timer_timeout"]
 
 [editable path="Player"]

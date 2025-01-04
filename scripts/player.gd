@@ -19,6 +19,10 @@ var blast_sprite = preload("res://art/blast.png")
 @onready var effects_layer: CanvasLayer = $EffectsLayer
 @onready var blast_refraction_timer: Timer = $BlastRefractionTimer
 
+#TESTING BLAST REFRESH
+@onready var enemy: Enemy = $"../Enemy"
+@onready var enemy_respawn_timer: Timer = $"../EnemyRespawnTimer"
+
 #endregion nodes
 
 #region consts
@@ -33,6 +37,8 @@ const WALKING_FRICTION = 5.0
 #endregion consts
 
 # bools for game logic
+var is_active: bool = true
+
 var rolling: bool = true
 var looking_left: bool = false
 
@@ -114,6 +120,11 @@ func blast(click_location: Vector2, charge = 1.0) -> void:
 		debug_hud.add_circle(position + 200*blast_direction, Color.PURPLE)
 		debug_hud.add_circle(position + velocity, Color.RED)
 
+	#TESTING blast refresh
+	if enemy.is_alive:
+		enemy.die()
+		enemy_respawn_timer.start()
+
 func jump() -> void:
 
 	# jump only if it would increase velocity
@@ -191,6 +202,8 @@ func reset(position_ = get_viewport_rect().size/2) -> void:
 	blasting = false
 	stop_rolling()
 
+	is_active = true
+
 func start_rolling() -> void:
 	if not rolling:
 		rolling = true
@@ -203,14 +216,28 @@ func stop_rolling() -> void:
 	if rolling:
 		rolling = false
 		#TODO: stop rolling animation
+		#TODO: consider look_direction
 
 		if debug:
 			print("Stopped Rolling")
 
+func die() -> void:
+	is_active = false
+	has_died.emit()
+
 func _on_blast_refraction_timer_timeout() -> void:
 	blast_refresh_disabled = false
 
+func _on_enemy_body_entered(body: Node2D) -> void:
+	die()
+
+func _on_enemy_enemy_has_died() -> void:
+	has_blast = true
+
 func _input(event: InputEvent) -> void:
+	if not is_active:
+		return
+
 	if event.is_action_pressed(&"click"):
 		charge_timer.start()
 
@@ -219,6 +246,9 @@ func _input(event: InputEvent) -> void:
 		charge_timer.stop()
 
 func _physics_process(delta: float) -> void:
+
+	if not is_active:
+		return
 
 	# handle walking/countersteering
 	var input_direction := Input.get_axis(&"left", &"right")
