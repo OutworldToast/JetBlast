@@ -12,23 +12,36 @@ var blast_sprite = preload("res://art/blast.png")
 #region nodes
 @onready var sprite: AnimatedSprite2D = $Sprite
 @onready var body_hitbox: CollisionShape2D = $BodyHitbox
-@onready var head_hitbox: CollisionShape2D = $HeadHitbox
+@onready var head: Area2D = $Head
+@onready var head_hitbox: CollisionShape2D = $Head/HeadHitbox
 @onready var debug_hud: DebugHud = $DebugHud
 @onready var charge_timer: Timer = $ChargeTimer
 @onready var effects_layer: CanvasLayer = $EffectsLayer
+@onready var blast_refraction_timer: Timer = $BlastRefractionTimer
 
 #endregion nodes
 
 #region consts
 const TERMINAL_SPEED = 1200.0
 const SPEED = TERMINAL_SPEED/3
-const JUMP_VELOCITY = -400.0
+const JUMP_VELOCITY = -600.0
+
+# should be multiplied by delta
+const WALKING_FRICTION = 5.0
+#const ROLLING_FRICTION = 0.5
+
 #endregion consts
 
+# bools for game logic
+var rolling: bool = false
 var looking_left: bool = false
+
 var has_jump: bool = true
 var has_blast: bool = true
 
+var blast_refresh_disabled: bool = false
+
+# debug/simplifiers
 var infinite_blasts: bool = debug
 
 func look_in_direction(direction: Vector2, flipped: bool = false) -> void:
@@ -54,6 +67,9 @@ func look_in_direction(direction: Vector2, flipped: bool = false) -> void:
 func blast(click_location: Vector2, charge = 1.0) -> void:
 	var blast_direction = (position - click_location).limit_length(1.0)
 
+	# remove small charges for accuracy
+	charge = charge if charge > 1.2 else 1.0
+
 	if blast_direction.x > 0:
 		look_in_direction(blast_direction.rotated(0.5 * PI), blast_direction.y > 0)
 	else:
@@ -67,6 +83,8 @@ func blast(click_location: Vector2, charge = 1.0) -> void:
 	velocity = redirect_blast if redirect_is_larger else min_blast
 
 	if not infinite_blasts:
+		blast_refresh_disabled = true
+		blast_refraction_timer.start()
 		has_blast = false
 
 	create_blast_visual(100 * blast_direction * Vector2(-1, -1), charge)
@@ -109,7 +127,7 @@ func jump() -> void:
 		look_direction = velocity.rotated(look_rotation * PI)
 		look_direction_changed = true
 
-	if velocity.x > -300 and velocity.x < 300:
+	if absf(velocity.x) < 1.2*SPEED:
 		look_direction = Vector2(velocity.x, 0)
 		look_direction_changed = true
 
@@ -117,34 +135,51 @@ func jump() -> void:
 		look_in_direction(look_direction)
 
 func walk(input_direction: float, delta) -> void:
+
+	# TODO: snappier turning
+
+	if absf(velocity.x) < 5.0:
+		velocity.x = 0
+
 	if input_direction:
 
 		var input_velocity = input_direction * SPEED
 		var abs_velocity_x = absf(velocity.x)
-
-		if sign(velocity.x) == sign(input_direction):
-			# Moving in the same direction as input
-			if abs_velocity_x < SPEED:
-				velocity.x += 2 * input_velocity * delta
-		else:
-			velocity.x += input_velocity * delta
+		var modifier
 
 		if absf(input_velocity) > abs_velocity_x:
 			look_in_direction(Vector2(input_direction, 0))
 			sprite.play()
 
+		# checks if player within walking speed
+		if abs_velocity_x < SPEED:
+			# make walking snappier
+			modifier = 3
+		elif sign(velocity.x) != sign(input_direction):
+			# allows for quicker countersteering in the air
+			modifier = 2
+		else:
+			# do not modify speed if same direction and not in walking speed
+			return
+
+		velocity.x += modifier * input_velocity * delta
+
 	else:
 		sprite.stop()
-		# apply horizontal friction
-		velocity.x = lerp(velocity.x, 0.0, 0.3 * delta)
 
 func reset(position_ = get_viewport_rect().size/2) -> void:
 	velocity = Vector2.ZERO
 	position = position_
+
 	look_in_direction(Vector2(position.x, 0))
+
 	looking_left = false
 	has_jump = true
 	has_blast = true
+	rolling = false
+
+func _on_blast_refraction_timer_timeout() -> void:
+	blast_refresh_disabled = false
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"click"):
@@ -156,8 +191,9 @@ func _input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 
-	#if debug:
-		#debug_hud.add_circle(spawn_point.position, Color.CORNFLOWER_BLUE)
+	# handle walking/countersteering
+	var input_direction := Input.get_axis(&"left", &"right")
+	walk(input_direction, delta)
 
 	# apply gravity and vertical friction
 	if not is_on_floor():
@@ -166,14 +202,24 @@ func _physics_process(delta: float) -> void:
 		var current_velocity = velocity
 
 		velocity += gravity * delta
+
+		# TODO: replace with gravity only applying at < terminal_speed?
 		velocity.y -= ver_friction.y * delta * current_velocity.y
+	else:
+		# ensures you cannot blast twice off the ground
+		if not blast_refresh_disabled:
+			has_blast = true
+		has_jump = true
+
+		if not input_direction:
+			# apply horizontal friction
+			if not rolling:
+				velocity.x = lerp(velocity.x, 0.0, WALKING_FRICTION * delta)
+			#else:
+				#velocity.x = lerp(velocity.x, 0.0, ROLLING_FRICTION * delta)
 
 	# handle jump
 	if Input.is_action_just_pressed(&"jump") and has_jump:
 		jump()
-
-	# handle walking/countersteering
-	var input_direction := Input.get_axis(&"left", &"right")
-	walk(input_direction, delta)
 
 	move_and_slide()
