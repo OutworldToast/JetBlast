@@ -1,0 +1,52 @@
+[gd_scene load_steps=3 format=3 uid="uid://8kubop73vbik"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_dkf30"]
+[ext_resource type="PackedScene" uid="uid://c34olt6qn5xfs" path="res://scenes/pause.tscn" id="2_4k5pi"]
+
+[node name="Main" type="Control"]
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_dkf30")
+
+[node name="HUD" type="Control" parent="."]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="UI" type="Control" parent="."]
+top_level = true
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="LoadLevelTest" type="Button" parent="UI"]
+layout_mode = 0
+offset_left = 947.0
+offset_top = 541.0
+offset_right = 991.0
+offset_bottom = 572.0
+text = "TEST"
+
+[node name="LoadLevelTutorial" type="Button" parent="UI"]
+layout_mode = 0
+offset_left = 930.0
+offset_top = 590.0
+offset_right = 1015.0
+offset_bottom = 621.0
+text = "TUTORIAL"
+
+[node name="Pause" parent="UI" instance=ExtResource("2_4k5pi")]
+layout_mode = 1
+
+[node name="Main2D" type="Node2D" parent="."]
+
+[node name="MainCamera" type="Camera2D" parent="Main2D"]
+position = Vector2(962, 541)
+
+[connection signal="pressed" from="UI/LoadLevelTest" to="." method="_on_load_level_test_pressed"]
+[connection signal="pressed" from="UI/LoadLevelTutorial" to="." method="_on_load_level_tutorial_pressed"]
