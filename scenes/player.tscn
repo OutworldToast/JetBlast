@@ -45,14 +45,6 @@ position = Vector2(10, 12)
 rotation = -2.60632
 shape = SubResource("CapsuleShape2D_ybcse")
 
-[node name="DebugHud" parent="." instance=ExtResource("4_n3bls")]
-
-[node name="ChargeTimer" type="Timer" parent="."]
-wait_time = 2.0
-one_shot = true
-
-[node name="EffectsLayer" type="CanvasLayer" parent="."]
-
 [node name="Head" type="Area2D" parent="."]
 collision_mask = 3
 
@@ -61,8 +53,16 @@ position = Vector2(117, -74)
 rotation = 2.04282
 shape = SubResource("CapsuleShape2D_phhlw")
 
+[node name="DebugHud" parent="." instance=ExtResource("4_n3bls")]
+
+[node name="ChargeTimer" type="Timer" parent="."]
+wait_time = 2.0
+one_shot = true
+
 [node name="BlastRefractionTimer" type="Timer" parent="."]
 wait_time = 0.05
 one_shot = true
+
+[node name="EffectsLayer" type="CanvasLayer" parent="."]
 
 [connection signal="timeout" from="BlastRefractionTimer" to="." method="_on_blast_refraction_timer_timeout"]

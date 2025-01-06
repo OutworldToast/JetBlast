@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://8kubop73vbik"]
+[gd_scene load_steps=4 format=3 uid="uid://8kubop73vbik"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_dkf30"]
 [ext_resource type="PackedScene" uid="uid://c34olt6qn5xfs" path="res://scenes/pause.tscn" id="2_4k5pi"]
+[ext_resource type="PackedScene" uid="uid://b3qvxkjudwlee" path="res://scenes/commander.tscn" id="3_pm1f1"]
 
 [node name="Main" type="Control"]
 process_mode = 3
@@ -48,5 +49,10 @@ layout_mode = 1
 [node name="MainCamera" type="Camera2D" parent="Main2D"]
 position = Vector2(962, 541)
 
+[node name="Commander" parent="." instance=ExtResource("3_pm1f1")]
+visible = false
+position = Vector2(1677, 875)
+
 [connection signal="pressed" from="UI/LoadLevelTest" to="." method="_on_load_level_test_pressed"]
 [connection signal="pressed" from="UI/LoadLevelTutorial" to="." method="_on_load_level_tutorial_pressed"]
+[connection signal="commander_has_died" from="Commander" to="." method="_on_commander_has_died"]

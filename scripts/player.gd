@@ -3,8 +3,9 @@ extends CharacterBody2D
 class_name Player
 
 signal has_died
+signal has_respawned
 
-var blast_sprite = preload("res://art/blast.png")
+var blast_scene: PackedScene = preload("res://scenes/blast.tscn")
 
 # debug true also sets infinite_blasts
 @export var debug = false
@@ -16,8 +17,13 @@ var blast_sprite = preload("res://art/blast.png")
 @onready var head_hitbox: CollisionShape2D = $Head/HeadHitbox
 @onready var debug_hud: DebugHud = $DebugHud
 @onready var charge_timer: Timer = $ChargeTimer
+#TODO: move this to main?
 @onready var effects_layer: CanvasLayer = $EffectsLayer
 @onready var blast_refraction_timer: Timer = $BlastRefractionTimer
+
+#TESTING BLAST REFRESH
+@onready var enemy: Enemy = $"../Enemy"
+@onready var enemy_respawn_timer: Timer = $"../EnemyRespawnTimer"
 
 #endregion nodes
 
@@ -28,11 +34,13 @@ const JUMP_VELOCITY = -600.0
 
 # should be multiplied by delta
 const WALKING_FRICTION = 5.0
-#const ROLLING_FRICTION = 0.5
+const ROLLING_FRICTION = 0.5
 
 #endregion consts
 
 # bools for game logic
+var is_active: bool = true
+
 var rolling: bool = true
 var looking_left: bool = false
 
@@ -65,15 +73,21 @@ func look_in_direction(direction: Vector2, flipped: bool = false) -> void:
 		print ("Character looking left" if looking_left else "Character looking right")
 		debug_hud.add_circle(200*direction + position, Color.BLUE)
 
-func create_blast_visual(blast_location, charge = 1.0) -> void:
+func create_blast(blast_location, charge = 1.0) -> void:
 	# create blast
-	var explosion = Sprite2D.new()
+
+	var explosion = blast_scene.instantiate()
+
 	explosion.global_position = position + blast_location
-	explosion.texture = blast_sprite
 	explosion.apply_scale(scale * charge)
+	#
+	#debug_hud.add_circle(explosion.global_position, Color.DARK_RED, )
 
 	# add blast to tree
-	effects_layer.add_child(explosion)
+	if effects_layer:
+		effects_layer.add_child(explosion)
+		#owner.add_child(explosion)
+		#explosion.add_to_group(&"blasts")
 
 	# destroy after 2 seconds
 	await get_tree().create_timer(2.0).timeout
@@ -105,7 +119,7 @@ func blast(click_location: Vector2, charge = 1.0) -> void:
 		blast_refraction_timer.start()
 		has_blast = false
 
-	create_blast_visual(100 * blast_direction * Vector2(-1, -1), charge)
+	create_blast(100 * blast_direction * Vector2(-1, -1), charge)
 
 	if debug:
 		print("Charge power: " + str(charge))
@@ -114,7 +128,14 @@ func blast(click_location: Vector2, charge = 1.0) -> void:
 		debug_hud.add_circle(position + 200*blast_direction, Color.PURPLE)
 		debug_hud.add_circle(position + velocity, Color.RED)
 
+	#TESTING blast refresh
+	if enemy.is_alive:
+		#enemy.die()
+		enemy_respawn_timer.start()
+
 func jump() -> void:
+
+	# TODO: bugfix for incorrect flip when moving right, tapping left then jumping after coming to standstill
 
 	# jump only if it would increase velocity
 	if velocity.y > JUMP_VELOCITY:
@@ -191,6 +212,9 @@ func reset(position_ = get_viewport_rect().size/2) -> void:
 	blasting = false
 	stop_rolling()
 
+	is_active = true
+	has_respawned.emit()
+
 func start_rolling() -> void:
 	if not rolling:
 		rolling = true
@@ -203,15 +227,31 @@ func stop_rolling() -> void:
 	if rolling:
 		rolling = false
 		#TODO: stop rolling animation
+		#TODO: consider look_direction
 
 		if debug:
 			print("Stopped Rolling")
 
+func die() -> void:
+	is_active = false
+	has_died.emit()
+
 func _on_blast_refraction_timer_timeout() -> void:
 	blast_refresh_disabled = false
 
+func _on_enemy_body_entered(body: Node2D) -> void:
+	if body is Player:
+		die()
+
+func _on_enemy_enemy_has_died() -> void:
+	has_blast = true
+	has_jump = true
+
 func _input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"click"):
+	if not is_active:
+		return
+
+	if event.is_action_pressed(&"click") and has_blast:
 		charge_timer.start()
 
 	if event.is_action_released(&"click") and has_blast:
@@ -220,12 +260,18 @@ func _input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 
+	if not is_active:
+		return
+
 	# handle walking/countersteering
 	var input_direction := Input.get_axis(&"left", &"right")
 	walk(input_direction, delta)
 
 	# apply gravity and vertical friction
 	if not is_on_floor():
+		if Input.is_action_just_pressed("down"):
+			velocity.y = TERMINAL_SPEED
+
 		var gravity = get_gravity()
 		var ver_friction = gravity/TERMINAL_SPEED
 		var current_velocity = velocity
@@ -244,8 +290,8 @@ func _physics_process(delta: float) -> void:
 			# apply horizontal friction
 			if not rolling:
 				velocity.x = lerp(velocity.x, 0.0, WALKING_FRICTION * delta)
-			#else:
-				#velocity.x = lerp(velocity.x, 0.0, ROLLING_FRICTION * delta)
+			else:
+				velocity.x = lerp(velocity.x, 0.0, ROLLING_FRICTION * delta)
 
 	# handle jump
 	if Input.is_action_just_pressed(&"jump") and has_jump:
