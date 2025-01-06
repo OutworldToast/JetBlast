@@ -26,3 +26,8 @@ func die() -> void:
 
 func _on_enemy_respawn_timer_timeout() -> void:
 	respawn()
+
+func _on_area_entered(area: Area2D) -> void:
+	# die if collision is with a blast
+	if area.is_in_group(&"blasts"):
+		die()

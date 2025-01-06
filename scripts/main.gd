@@ -45,9 +45,17 @@ func load_level(path: String, name_: String = "") -> void:
 		add_child(level_instance)
 		print("Loaded Level " + name_)
 
+func _on_commander_has_died() -> void:
+	pause.toggle_pause()
+	unload_level()
+	open_menu()
+
 func _on_load_level_test_pressed() -> void:
 	load_level(levels.TEST, "Test")
 	close_menu()
+
+	$Commander.respawn()
+	$Commander.show()
 
 func _on_load_level_tutorial_pressed() -> void:
 	load_level(levels.TUTORIAL, "Tutorial")
