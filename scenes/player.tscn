@@ -31,6 +31,7 @@ height = 142.196
 process_mode = 1
 position = Vector2(429, 347)
 scale = Vector2(0.25, 0.25)
+collision_mask = 7
 script = ExtResource("1_1xv3d")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
@@ -44,7 +45,10 @@ position = Vector2(10, 12)
 rotation = -2.60632
 shape = SubResource("CapsuleShape2D_ybcse")
 
-[node name="HeadHitbox" type="CollisionShape2D" parent="."]
+[node name="Head" type="Area2D" parent="."]
+collision_mask = 3
+
+[node name="HeadHitbox" type="CollisionShape2D" parent="Head"]
 position = Vector2(117, -74)
 rotation = 2.04282
 shape = SubResource("CapsuleShape2D_phhlw")
@@ -55,4 +59,10 @@ shape = SubResource("CapsuleShape2D_phhlw")
 wait_time = 2.0
 one_shot = true
 
+[node name="BlastRefractionTimer" type="Timer" parent="."]
+wait_time = 0.05
+one_shot = true
+
 [node name="EffectsLayer" type="CanvasLayer" parent="."]
+
+[connection signal="timeout" from="BlastRefractionTimer" to="." method="_on_blast_refraction_timer_timeout"]

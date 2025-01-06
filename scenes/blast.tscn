@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://dwwb3emr88o5a"]
+
+[ext_resource type="Texture2D" uid="uid://2umn607vgbgr" path="res://art/blast.png" id="1_50330"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_tud6a"]
+radius = 179.045
+
+[node name="Blast" type="Area2D" groups=["blasts"]]
+collision_layer = 8
+collision_mask = 2
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("1_50330")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." groups=["blasts"]]
+shape = SubResource("CircleShape2D_tud6a")

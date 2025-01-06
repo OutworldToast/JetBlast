@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://b3qvxkjudwlee"]
+
+[ext_resource type="PackedScene" uid="uid://bloslk60undni" path="res://scenes/enemy.tscn" id="1_ttxtk"]
+[ext_resource type="Script" path="res://scripts/commander.gd" id="2_3imq1"]
+
+[node name="Enemy" instance=ExtResource("1_ttxtk")]
+script = ExtResource("2_3imq1")
+
+[node name="Sprite" parent="." index="0"]
+rotation = 3.14159
